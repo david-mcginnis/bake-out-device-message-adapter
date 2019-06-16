@@ -1,0 +1,27 @@
+{
+  "name": "bake-out-device-message-adapter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "node_modules/node-red/red.js -s ./settings.js -u ./",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "node-red"
+  ],
+  "author": "David McGinnis",
+  "license": "ISC",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "dependencies": {
+    "i2c-bus": "^4.0.9",
+    "node-red": "^0.20.5",
+    "node-red-dashboard": "^2.15.4"
+  }
+}

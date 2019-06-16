@@ -1,0 +1,462 @@
+[
+    {
+        "id": "5f562f66.a301e",
+        "type": "tab",
+        "label": "device-message-adapter",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "6ad7c930.1a06b8",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#097479",
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#000000",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#0eb8c0",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#555555",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#eeeeee",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#097479",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#333333",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey"
+            }
+        },
+        "site": {
+            "name": "Blinky-Lite-Tutorial",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "ff58bdbf.be5b5",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "db8fd8d6.640718",
+        "type": "ui_group",
+        "z": "",
+        "name": "Default",
+        "tab": "ff58bdbf.be5b5",
+        "disp": true,
+        "width": "14",
+        "collapse": false
+    },
+    {
+        "id": "cf5477b3.555708",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 120,
+        "y": 200,
+        "wires": [
+            [
+                "c5f6dafb.42fb18"
+            ]
+        ]
+    },
+    {
+        "id": "c5f6dafb.42fb18",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Restart Plot",
+        "func": "msg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 350,
+        "y": 200,
+        "wires": [
+            [
+                "440a99e6.daae38"
+            ]
+        ]
+    },
+    {
+        "id": "5ef609e6.7c6038",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Get Temperature",
+        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nTemperature = (UpperByte * 16 + LowerByte / 16);\nTemperature = Temperature + 0;\nreturn {topic:'Temperature', payload:Temperature}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 370,
+        "y": 160,
+        "wires": [
+            [
+                "440a99e6.daae38",
+                "70f9dc7a.b15bc4"
+            ]
+        ]
+    },
+    {
+        "id": "440a99e6.daae38",
+        "type": "ui_chart",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "group": "db8fd8d6.640718",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "label": "chart",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "outputs": 1,
+        "x": 570,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "72d86190.ad104",
+        "type": "rpi-gpio out",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "pin": "36",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "x": 340,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "13293ecc.6d3cc1",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 360,
+        "wires": [
+            [
+                "72d86190.ad104",
+                "e17bc3ae.1cb01"
+            ]
+        ]
+    },
+    {
+        "id": "b3c46ace.05a698",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "false",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 420,
+        "wires": [
+            [
+                "72d86190.ad104",
+                "e17bc3ae.1cb01"
+            ]
+        ]
+    },
+    {
+        "id": "e17bc3ae.1cb01",
+        "type": "rpi-gpio out",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "pin": "11",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "x": 340,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "6138e400.856dfc",
+        "type": "rpi-gpio out",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "pin": "13",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "x": 340,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "527eb742.e6e118",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 480,
+        "wires": [
+            [
+                "6138e400.856dfc"
+            ]
+        ]
+    },
+    {
+        "id": "c3daa5e1.75f728",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "false",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 520,
+        "wires": [
+            [
+                "6138e400.856dfc"
+            ]
+        ]
+    },
+    {
+        "id": "b6e24967.126458",
+        "type": "rpi-gpio out",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "pin": "40",
+        "set": true,
+        "level": "1",
+        "freq": "",
+        "out": "out",
+        "x": 340,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "5d608587.8d04ac",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 680,
+        "wires": [
+            [
+                "b6e24967.126458"
+            ]
+        ]
+    },
+    {
+        "id": "89775c7.23026a",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "false",
+        "payloadType": "bool",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 720,
+        "wires": [
+            [
+                "b6e24967.126458"
+            ]
+        ]
+    },
+    {
+        "id": "773faf09.3c713",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "x": 130,
+        "y": 100,
+        "wires": [
+            [
+                "28a7d357.fbbdbc"
+            ]
+        ]
+    },
+    {
+        "id": "28a7d357.fbbdbc",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Read",
+        "func": "var i2c=global.get(\"i2c\");\nvar readBuffer =new Buffer(2);\nvar test = -1;\nvar i2c1 = null;\n\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0xc0]));\ni2c1.i2cWriteSync(102, 1, new Buffer([0x00]));\ni2c1.closeSync();\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0xc1]));\ni2c1.i2cReadSync(102, 2, readBuffer)\ni2c1.closeSync();\n\nreturn {topic:'readBuffer',payload:readBuffer};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 100,
+        "wires": [
+            [
+                "5ef609e6.7c6038"
+            ]
+        ]
+    },
+    {
+        "id": "70f9dc7a.b15bc4",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Toggle Blue LED",
+        "func": "var toggle = context.get('toggle');\nif (toggle == undefined) toggle = true;\ntoggle = !toggle;\ncontext.set('toggle',toggle);\nreturn {topic:'toggle',payload:toggle};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 610,
+        "y": 100,
+        "wires": [
+            [
+                "84295d13.2c929"
+            ]
+        ]
+    },
+    {
+        "id": "84295d13.2c929",
+        "type": "rpi-gpio out",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "pin": "15",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "x": 780,
+        "y": 100,
+        "wires": []
+    }
+]
