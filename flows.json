@@ -111,108 +111,42 @@
         "hidden": false
     },
     {
-        "id": "db8fd8d6.640718",
-        "type": "ui_group",
+        "id": "e5f2f431.5be658",
+        "type": "mqtt-broker",
         "z": "",
-        "name": "Default",
-        "tab": "ff58bdbf.be5b5",
-        "disp": true,
-        "width": "14",
-        "collapse": false
-    },
-    {
-        "id": "cf5477b3.555708",
-        "type": "inject",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "x": 120,
-        "y": 200,
-        "wires": [
-            [
-                "c5f6dafb.42fb18"
-            ]
-        ]
-    },
-    {
-        "id": "c5f6dafb.42fb18",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Restart Plot",
-        "func": "msg.payload = [];\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 350,
-        "y": 200,
-        "wires": [
-            [
-                "440a99e6.daae38"
-            ]
-        ]
+        "name": "blinky-lite-controlbox",
+        "broker": "$(MQTTSERVERIP)",
+        "port": "1883",
+        "clientid": "$(MQTTCLIENTID)",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
     },
     {
         "id": "5ef609e6.7c6038",
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "Get Temperature",
-        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nTemperature = (UpperByte * 16 + LowerByte / 16);\nTemperature = Temperature + 0;\nreturn {topic:'Temperature', payload:Temperature}",
+        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nTemperature = (UpperByte * 16 + LowerByte / 16);\nreturn {topic:flow.get('archiverTopic') + 'temperature/reading', payload:{\"type\":\"scalar\",\"value\":Temperature}}",
         "outputs": 1,
         "noerr": 0,
         "x": 370,
         "y": 160,
         "wires": [
             [
-                "440a99e6.daae38",
-                "70f9dc7a.b15bc4"
+                "70f9dc7a.b15bc4",
+                "dd277d43.3e001"
             ]
-        ]
-    },
-    {
-        "id": "440a99e6.daae38",
-        "type": "ui_chart",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "group": "db8fd8d6.640718",
-        "order": 0,
-        "width": 0,
-        "height": 0,
-        "label": "chart",
-        "chartType": "line",
-        "legend": "true",
-        "xformat": "HH:mm:ss",
-        "interpolate": "linear",
-        "nodata": "",
-        "dot": false,
-        "ymin": "",
-        "ymax": "",
-        "removeOlder": 1,
-        "removeOlderPoints": "",
-        "removeOlderUnit": "3600",
-        "cutout": 0,
-        "useOneColor": false,
-        "colors": [
-            "#1f77b4",
-            "#aec7e8",
-            "#ff7f0e",
-            "#2ca02c",
-            "#98df8a",
-            "#d62728",
-            "#ff9896",
-            "#9467bd",
-            "#c5b0d5"
-        ],
-        "useOldStyle": false,
-        "outputs": 1,
-        "x": 570,
-        "y": 160,
-        "wires": [
-            []
         ]
     },
     {
@@ -418,7 +352,7 @@
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "Read",
-        "func": "var i2c=global.get(\"i2c\");\nvar readBuffer =new Buffer(2);\nvar test = -1;\nvar i2c1 = null;\n\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0xc0]));\ni2c1.i2cWriteSync(102, 1, new Buffer([0x00]));\ni2c1.closeSync();\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0xc1]));\ni2c1.i2cReadSync(102, 2, readBuffer)\ni2c1.closeSync();\n\nreturn {topic:'readBuffer',payload:readBuffer};",
+        "func": "var i2c=global.get(\"i2c\");\nvar readBuffer =new Buffer(2);\nvar i2c1  = flow.get('i2c1');\n//i2c1 = i2c.openSync(3);\n//i2c1.i2cWriteSync(102, 1, new Buffer([0xc0]));\n//i2c1.i2cWriteSync(102, 1, new Buffer([0x00]));\n//i2c1.closeSync();\n//i2c1 = i2c.openSync(3);\n//i2c1.i2cWriteSync(102, 1, new Buffer([0xc1]));\ni2c1.i2cReadSync(102, 2, readBuffer);\n//i2c1.closeSync();\n\nreturn {topic:'readBuffer',payload:readBuffer};",
         "outputs": 1,
         "noerr": 0,
         "x": 310,
@@ -457,6 +391,150 @@
         "out": "out",
         "x": 780,
         "y": 100,
+        "wires": []
+    },
+    {
+        "id": "bfb9fffe.b30d6",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": ".1",
+        "x": 130,
+        "y": 40,
+        "wires": [
+            [
+                "a1356b58.37da38"
+            ]
+        ]
+    },
+    {
+        "id": "a1356b58.37da38",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Read",
+        "func": "var i2c=global.get(\"i2c\");\nvar readBuffer =new Buffer(2);\nvar i2c1 = null;\n\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0x00]));\n//i2c1.closeSync();\nflow.set('i2c1',i2c1);\n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "aa91a246.75cc6",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "ARCHIVERTOPIC",
+        "payloadType": "env",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 900,
+        "wires": [
+            [
+                "c6313d12.de68b"
+            ]
+        ]
+    },
+    {
+        "id": "c6313d12.de68b",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Set Archiver Topic",
+        "func": "flow.set('archiverTopic',msg.payload)\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 290,
+        "y": 900,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "70102039.f101f",
+        "type": "mqtt in",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "archiver/blinky-lite/demo/dma/+/bake-out/+/setting",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "e5f2f431.5be658",
+        "x": 240,
+        "y": 820,
+        "wires": [
+            [
+                "b3264e0a.5aea"
+            ]
+        ]
+    },
+    {
+        "id": "b3264e0a.5aea",
+        "type": "json",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 500,
+        "y": 820,
+        "wires": [
+            [
+                "e544e64d.008ea8"
+            ]
+        ]
+    },
+    {
+        "id": "e544e64d.008ea8",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Parse Setting",
+        "func": "var archiverTopic = flow.get('archiverTopic').split('/');\nvar inputTopic =  msg.topic.split('/');\nif (archiverTopic[4] != inputTopic[4]) return null;\nreturn {topic: inputTopic[6], payload:msg.payload.value};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 650,
+        "y": 820,
+        "wires": [
+            [
+                "86ea5cf7.00a84"
+            ]
+        ]
+    },
+    {
+        "id": "dd277d43.3e001",
+        "type": "mqtt out",
+        "z": "5f562f66.a301e",
+        "name": "blinky-lite-controlbox",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "broker": "e5f2f431.5be658",
+        "x": 620,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "86ea5cf7.00a84",
+        "type": "debug",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 830,
+        "y": 820,
         "wires": []
     }
 ]
