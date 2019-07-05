@@ -128,7 +128,7 @@
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "Get Temperature",
-        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nvar temperature = (UpperByte * 16 + LowerByte / 16);\ntemperature  = Math.round(temperature * 100.0) / 100.0;\nflow.set('temperature',temperature);\nreturn {topic:flow.get('archiverTopic') + 'temperature/reading', payload:{\"type\":\"scalar\",\"value\":temperature}}",
+        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nvar temperature = (UpperByte * 16 + LowerByte / 16);\nvar settingsReadback = flow.get('settingsReadback');\nvar tempSamples = settingsReadback['temp-samples'];\nif (tempSamples < 1.0) tempSamples = 1.0;\nvar oldTemperature = context.get('temperature');\nif (oldTemperature == undefined) oldTemperature = 20.0;\ntemperature = oldTemperature + (temperature - oldTemperature) / tempSamples;\ncontext.set('temperature',temperature);\ntemperature  = Math.round(temperature * 100.0) / 100.0;\nflow.set('temperature',temperature);\nreturn {topic:flow.get('archiverTopic') + 'temperature/reading', payload:{\"type\":\"scalar\",\"value\":temperature}}",
         "outputs": 1,
         "noerr": 0,
         "x": 510,
@@ -441,7 +441,9 @@
         "x": 850,
         "y": 80,
         "wires": [
-            []
+            [
+                "914a4cef.a4dc3"
+            ]
         ]
     },
     {
@@ -574,7 +576,7 @@
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "State Machine",
-        "func": "if (msg.topic != 'clock')\n{\n    if (msg.topic == 'state')\n    {\n        context.set('state',msg.payload.state);\n        context.set('startStateTime', new Date().getTime());\n        context.set('startStateTemperature', flow.get('temperature'));\n    }\n    else\n    {\n        return null;\n    }\n    return null;\n}\nvar state = context.get('state');\nif (state == undefined) state = 0;\nvar settingsReadback = flow.get('settingsReadback');\nvar temperature = flow.get('temperature');\nvar targetTemperature = temperature;\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nif (regLEDOn == undefined)\n{\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n}\nvar now = msg.payload;\nvar infoMsg = null;\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-up-time']) deltaTime = settingsReadback['ramp-up-time'];\n    targetTemperature = (settingsReadback['reg-temp'] - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-up-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-down-time']) deltaTime = settingsReadback['ramp-down-time'];\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-down-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(settingsReadback['reg-temp'] * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nreturn [{topic:'relay',payload:relayOn}, {topic:'ramp-temp',payload:targetTemperature}, {topic:'regLED',payload:regLEDOn}, infoMsg];",
+        "func": "var relayBounceDelayTimeMilli = 10000;\nfunction checkForRelayBounce(relayOn, now)\n{\n    var relayOnSet = relayOn;\n    if (relayOn != context.get('relayLastState'))\n    {\n        if (relayOn == 0)\n        {\n            context.set('relayLastShutOffTime', now);\n        }\n        else\n        {\n            if ((now - context.get('relayLastShutOffTime')) < relayBounceDelayTimeMilli) relayOnSet = 0;\n        }\n    }\n    context.set('relayLastState', relayOnSet);\n    return relayOnSet;\n}\nif (msg.topic != 'clock')\n{\n    if (msg.topic == 'state')\n    {\n        context.set('state',msg.payload.state);\n        context.set('startStateTime', new Date().getTime());\n        context.set('startStateTemperature', flow.get('temperature'));\n        context.set('relayLastShutOffTime', 0);\n    }\n    else\n    {\n        return null;\n    }\n    return null;\n}\nvar state = context.get('state');\nif (state == undefined) state = 0;\nvar settingsReadback = flow.get('settingsReadback');\nvar temperature = flow.get('temperature');\nvar targetTemperature = temperature;\n\nif (context.get('relayLastShutOffTime') == undefined) context.set('relayLastShutOffTime', 0);\nif (context.get('relayLastState') == undefined) context.set('relayLastState', 0);\nif (context.get('regLEDOn') == undefined) context.set('regLEDOn', false);\n\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nvar now = msg.payload;\nvar infoMsg = null;\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-up-time']) deltaTime = settingsReadback['ramp-up-time'];\n    targetTemperature = (settingsReadback['reg-temp'] - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-up-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0;\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-down-time']) deltaTime = settingsReadback['ramp-down-time'];\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-down-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(settingsReadback['reg-temp'] * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nreturn [{topic:'relay',payload:relayOn}, {topic:'ramp-temp',payload:targetTemperature}, {topic:'regLED',payload:regLEDOn}, infoMsg];",
         "outputs": 4,
         "noerr": 0,
         "x": 420,
@@ -677,6 +679,20 @@
         "out": "out",
         "x": 640,
         "y": 420,
+        "wires": []
+    },
+    {
+        "id": "914a4cef.a4dc3",
+        "type": "debug",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 1060,
+        "y": 80,
         "wires": []
     }
 ]

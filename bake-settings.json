@@ -1,1 +1,1 @@
-{"state":0,"reg-temp":100,"reg-window":1,"ramp-up-time":1.2,"ramp-down-time":1}
+{"state":1,"reg-temp":100,"reg-window":1,"ramp-up-time":0.5,"ramp-down-time":0.5,"temp-samples":4,"duty-factor":70}
