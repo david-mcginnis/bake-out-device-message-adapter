@@ -102,10 +102,10 @@
         }
     },
     {
-        "id": "e5f2f431.5be658",
+        "id": "753eaa03.ce2cb4",
         "type": "mqtt-broker",
         "z": "",
-        "name": "blinky-lite-controlbox",
+        "name": "MQTT Broker",
         "broker": "$(MQTTSERVERIP)",
         "port": "1883",
         "clientid": "$(MQTTCLIENTID)",
@@ -128,15 +128,14 @@
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "Get Temperature",
-        "func": "var UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nvar temperature = (UpperByte * 16 + LowerByte / 16);\nvar settingsReadback = flow.get('settingsReadback');\nvar tempSamples = settingsReadback['temp-samples'];\nif (tempSamples < 1.0) tempSamples = 1.0;\nvar oldTemperature = context.get('temperature');\nif (oldTemperature == undefined) oldTemperature = 20.0;\ntemperature = oldTemperature + (temperature - oldTemperature) / tempSamples;\ncontext.set('temperature',temperature);\ntemperature  = Math.round(temperature * 100.0) / 100.0;\nflow.set('temperature',temperature);\nreturn {topic:flow.get('archiverTopic') + 'temperature/reading', payload:{\"type\":\"scalar\",\"value\":temperature}}",
+        "func": "function getAttrObject(device, propName, attrName)\n{\n    var props = device[propName];\n    var attr = props.find(attr => attr.attr === attrName);\n    return attr;\n}\n\nvar UpperByte = msg.payload[0];\nvar LowerByte = msg.payload[1];\nif (UpperByte == LowerByte) return null;\nif (UpperByte > 127) UpperByte = UpperByte - 256;\n//if (LowerByte > 127) LowerByte = LowerByte - 256;\nvar temperature = (UpperByte * 16 + LowerByte / 16);\n\nvar device = flow.get('device');\nvar tempSamples = getAttrObject(device, 'settings', 'temp-samples').value;\nif (tempSamples < 1.0) tempSamples = 1.0;\nvar oldTemperature = context.get('temperature');\nif (oldTemperature == undefined) oldTemperature = 20.0;\ntemperature = oldTemperature + (temperature - oldTemperature) / tempSamples;\ncontext.set('temperature',temperature);\ntemperature  = Math.round(temperature * 100.0) / 100.0;\nvar tempAttr = getAttrObject(device, 'readings', 'temperature');\ntempAttr.value = temperature;\nreturn {topic:'temperature', payload:temperature};",
         "outputs": 1,
         "noerr": 0,
-        "x": 510,
+        "x": 470,
         "y": 780,
         "wires": [
             [
-                "70f9dc7a.b15bc4",
-                "dd277d43.3e001"
+                "70f9dc7a.b15bc4"
             ]
         ]
     },
@@ -151,7 +150,7 @@
         "freq": "",
         "out": "out",
         "x": 640,
-        "y": 240,
+        "y": 440,
         "wires": []
     },
     {
@@ -167,7 +166,7 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 130,
-        "y": 240,
+        "y": 440,
         "wires": [
             [
                 "72d86190.ad104",
@@ -188,7 +187,7 @@
         "once": false,
         "onceDelay": 0.1,
         "x": 130,
-        "y": 300,
+        "y": 500,
         "wires": [
             [
                 "72d86190.ad104",
@@ -207,7 +206,7 @@
         "freq": "",
         "out": "out",
         "x": 640,
-        "y": 300,
+        "y": 500,
         "wires": []
     },
     {
@@ -292,7 +291,7 @@
         "func": "var toggle = context.get('toggle');\nif (toggle == undefined) toggle = true;\ntoggle = !toggle;\ncontext.set('toggle',toggle);\nreturn {topic:'toggle',payload:toggle};",
         "outputs": 1,
         "noerr": 0,
-        "x": 1070,
+        "x": 670,
         "y": 780,
         "wires": [
             [
@@ -310,106 +309,8 @@
         "level": "0",
         "freq": "",
         "out": "out",
-        "x": 1240,
+        "x": 840,
         "y": 780,
-        "wires": []
-    },
-    {
-        "id": "aa91a246.75cc6",
-        "type": "inject",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "topic": "",
-        "payload": "ARCHIVERTOPIC",
-        "payloadType": "env",
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "x": 130,
-        "y": 20,
-        "wires": [
-            [
-                "c6313d12.de68b"
-            ]
-        ]
-    },
-    {
-        "id": "c6313d12.de68b",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Set Archiver Topic",
-        "func": "flow.set('archiverTopic',msg.payload)\nreturn null;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 290,
-        "y": 20,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "70102039.f101f",
-        "type": "mqtt in",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "topic": "archiver/blinky-lite/demo/dma/+/bake-out/+/setting",
-        "qos": "0",
-        "datatype": "auto",
-        "broker": "e5f2f431.5be658",
-        "x": 240,
-        "y": 140,
-        "wires": [
-            [
-                "b3264e0a.5aea"
-            ]
-        ]
-    },
-    {
-        "id": "b3264e0a.5aea",
-        "type": "json",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "property": "payload",
-        "action": "",
-        "pretty": false,
-        "x": 500,
-        "y": 140,
-        "wires": [
-            [
-                "e544e64d.008ea8"
-            ]
-        ]
-    },
-    {
-        "id": "e544e64d.008ea8",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Parse Setting",
-        "func": "var archiverTopic = flow.get('archiverTopic').split('/');\nvar inputTopic =  msg.topic.split('/');\nif (archiverTopic[4] != inputTopic[4]) return null;\nvar settingsReadback = flow.get('settingsReadback');\nsettingsReadback[inputTopic[6]] = msg.payload.value;\nreturn {topic: inputTopic[6], payload:settingsReadback};",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 650,
-        "y": 140,
-        "wires": [
-            [
-                "c5c68b41.de2288",
-                "fa84e555.4dd318",
-                "14d4dc24.b47e94"
-            ]
-        ]
-    },
-    {
-        "id": "dd277d43.3e001",
-        "type": "mqtt out",
-        "z": "5f562f66.a301e",
-        "name": "blinky-lite-controlbox",
-        "topic": "",
-        "qos": "0",
-        "retain": "false",
-        "broker": "e5f2f431.5be658",
-        "x": 1100,
-        "y": 360,
         "wires": []
     },
     {
@@ -420,7 +321,7 @@
         "func": "var i2c=global.get(\"i2c\");\nvar i2c1 = null;\ni2c1 = i2c.openSync(3);\ni2c1.i2cWriteSync(102, 1, new Buffer([0xc0]));\nvar word = i2c1.readWordSync(102, 0);\ni2c1.closeSync();\nvar readBuffer = new Buffer([(word & 0x00ff), (word & 0xff00) >> 8]);\n\nreturn {topic:'readword',payload:readBuffer};\n",
         "outputs": 1,
         "noerr": 0,
-        "x": 300,
+        "x": 280,
         "y": 780,
         "wires": [
             [
@@ -429,172 +330,25 @@
         ]
     },
     {
-        "id": "c5c68b41.de2288",
-        "type": "file",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "filename": "bake-settings.json",
-        "appendNewline": true,
-        "createDir": false,
-        "overwriteFile": "true",
-        "encoding": "none",
-        "x": 850,
-        "y": 80,
-        "wires": [
-            [
-                "914a4cef.a4dc3"
-            ]
-        ]
-    },
-    {
-        "id": "1161fa41.8d37a6",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Change init Settings",
-        "func": "return {topic:'test',payload:{\"state\":0, \"reg-temp\":0,\"reg-window\":0,\"ramp-up-time\":0,\"ramp-down-time\":0}};",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 380,
-        "y": 80,
-        "wires": [
-            [
-                "c5c68b41.de2288"
-            ]
-        ]
-    },
-    {
-        "id": "2ef0d877.a9ed18",
-        "type": "inject",
-        "z": "5f562f66.a301e",
-        "name": "Change Init settings",
-        "topic": "",
-        "payload": "314",
-        "payloadType": "num",
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "x": 170,
-        "y": 80,
-        "wires": [
-            [
-                "1161fa41.8d37a6"
-            ]
-        ]
-    },
-    {
-        "id": "27fbffbb.53c6a",
-        "type": "file in",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "filename": "bake-settings.json",
-        "format": "utf8",
-        "chunk": false,
-        "sendError": false,
-        "encoding": "none",
-        "x": 350,
-        "y": 700,
-        "wires": [
-            [
-                "68d2db63.2ff144"
-            ]
-        ]
-    },
-    {
-        "id": "68d2db63.2ff144",
-        "type": "json",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "property": "payload",
-        "action": "",
-        "pretty": false,
-        "x": 510,
-        "y": 700,
-        "wires": [
-            [
-                "fa84e555.4dd318"
-            ]
-        ]
-    },
-    {
-        "id": "fa84e555.4dd318",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Parse for MQTT",
-        "func": "var settingsReadback = msg.payload;\nif (msg.topic == 'initSettingsReadback') settingsReadback['state'] = 0;\nflow.set('settingsReadback',msg.payload);\nvar echoSettingsReadback = {};\nfor (var key in settingsReadback)\n{\n    topic = flow.get('archiverTopic') + key + '/reading';\n    echoSettingsReadback[topic] = {type :\"scalar\",value: settingsReadback[key] };\n}\nreturn {topic:'echoSettingsReadback',payload:echoSettingsReadback};",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 860,
-        "y": 700,
-        "wires": [
-            [
-                "4a63b59d.e06dec"
-            ]
-        ]
-    },
-    {
-        "id": "4a63b59d.e06dec",
-        "type": "split",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "splt": "\\n",
-        "spltType": "str",
-        "arraySplt": 1,
-        "arraySpltType": "len",
-        "stream": false,
-        "addname": "topic",
-        "x": 1050,
-        "y": 700,
-        "wires": [
-            [
-                "dd277d43.3e001"
-            ]
-        ]
-    },
-    {
-        "id": "e4f45ed.cf233a",
-        "type": "inject",
-        "z": "5f562f66.a301e",
-        "name": "Get Init Settings",
-        "topic": "initSettingsReadback",
-        "payload": "",
-        "payloadType": "date",
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": "5",
-        "x": 160,
-        "y": 700,
-        "wires": [
-            [
-                "27fbffbb.53c6a"
-            ]
-        ]
-    },
-    {
         "id": "14d4dc24.b47e94",
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "State Machine",
-        "func": "var relayBounceDelayTimeMilli = 10000;\nfunction checkForRelayBounce(relayOn, now)\n{\n    var relayOnSet = relayOn;\n    if (relayOn != context.get('relayLastState'))\n    {\n        if (relayOn == 0)\n        {\n            context.set('relayLastShutOffTime', now);\n        }\n        else\n        {\n            if ((now - context.get('relayLastShutOffTime')) < relayBounceDelayTimeMilli) relayOnSet = 0;\n        }\n    }\n    context.set('relayLastState', relayOnSet);\n    return relayOnSet;\n}\nif (msg.topic != 'clock')\n{\n    if (msg.topic == 'state')\n    {\n        context.set('state',msg.payload.state);\n        context.set('startStateTime', new Date().getTime());\n        context.set('startStateTemperature', flow.get('temperature'));\n        context.set('relayLastShutOffTime', 0);\n    }\n    else\n    {\n        return null;\n    }\n    return null;\n}\nvar state = context.get('state');\nif (state == undefined) state = 0;\nvar settingsReadback = flow.get('settingsReadback');\nvar temperature = flow.get('temperature');\nvar targetTemperature = temperature;\n\nif (context.get('relayLastShutOffTime') == undefined) context.set('relayLastShutOffTime', 0);\nif (context.get('relayLastState') == undefined) context.set('relayLastState', 0);\nif (context.get('regLEDOn') == undefined) context.set('regLEDOn', false);\n\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nvar now = msg.payload;\nvar infoMsg = null;\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-up-time']) deltaTime = settingsReadback['ramp-up-time'];\n    targetTemperature = (settingsReadback['reg-temp'] - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-up-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0;\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > settingsReadback['ramp-down-time']) deltaTime = settingsReadback['ramp-down-time'];\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / settingsReadback['ramp-down-time'];\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(settingsReadback['reg-temp'] * 100.0) / 100.0;\n    if (temperature < (targetTemperature - settingsReadback['reg-window']))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nreturn [{topic:'relay',payload:relayOn}, {topic:'ramp-temp',payload:targetTemperature}, {topic:'regLED',payload:regLEDOn}, infoMsg];",
-        "outputs": 4,
+        "func": "var relayBounceDelayTimeMilli = 10000;\nfunction getAttrObject(device, propName, attrName)\n{\n    var props = device[propName];\n    var attr = props.find(attr => attr.attr === attrName);\n    return attr;\n}\nfunction checkForRelayBounce(relayOn, now)\n{\n    var relayOnSet = relayOn;\n    if (relayOn != context.get('relayLastState'))\n    {\n        if (relayOn == 0)\n        {\n            context.set('relayLastShutOffTime', now);\n        }\n        else\n        {\n            if ((now - context.get('relayLastShutOffTime')) < relayBounceDelayTimeMilli) relayOnSet = 0;\n        }\n    }\n    context.set('relayLastState', relayOnSet);\n    return relayOnSet;\n}\nvar device = flow.get('device');\nvar temperature = getAttrObject(device, 'readings', 'temperature').value;\nvar targetTemperature = temperature;\nvar dutyFactor = 0.0;\nvar state = context.get('state');\nif (state == undefined) \n{\n    state = 0;\n    context.set('state',state);\n}\nvar deviceState = getAttrObject(device, 'settings', 'state').value;\nif (deviceState != state)\n{\n    state = deviceState;\n    context.set('state',deviceState);\n    context.set('startStateTime', new Date().getTime());\n    context.set('startStateTemperature', temperature);\n    context.set('relayLastShutOffTime', 0);\n}\n\nif (context.get('relayLastShutOffTime') == undefined) context.set('relayLastShutOffTime', 0);\nif (context.get('relayLastState') == undefined) context.set('relayLastState', 0);\nif (context.get('regLEDOn') == undefined) context.set('regLEDOn', false);\n\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nvar now = msg.payload;\nvar rampUptime = getAttrObject(device, 'settings', 'ramp-up-time').value;\nvar rampDowntime = getAttrObject(device, 'settings', 'ramp-down-time').value;\nvar regTemp = getAttrObject(device, 'settings', 'reg-temp').value;\nvar regWindow = getAttrObject(device, 'settings', 'reg-window').value;\n\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampUptime) deltaTime = rampUptime;\n    targetTemperature = (regTemp - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampUptime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0;\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampDowntime) deltaTime = rampDowntime;\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampDowntime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(regTemp * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nvar attrDutyFactor = getAttrObject(device, 'readings', 'duty-factor');\nvar attrRampTemp = getAttrObject(device, 'readings', 'ramp-temp');\nvar attrRelay = getAttrObject(device, 'readings', 'relay');\n\nattrDutyFactor.value = dutyFactor;\nattrRampTemp.value = targetTemperature;\nattrRelay.value = relayOn;\n\nreturn [{topic:'relay',payload:relayOn}, {topic:'device',payload:device}, {topic:'regLED',payload:regLEDOn}];",
+        "outputs": 3,
         "noerr": 0,
         "x": 420,
-        "y": 380,
+        "y": 580,
         "wires": [
             [
                 "72d86190.ad104",
-                "e17bc3ae.1cb01",
-                "227bb58f.f9acca"
+                "e17bc3ae.1cb01"
             ],
             [
-                "227bb58f.f9acca"
+                "c41edba7.5b4fb8"
             ],
             [
                 "7994edba.fadd74"
-            ],
-            [
-                "d50d60eb.b416f"
             ]
         ]
     },
@@ -611,59 +365,10 @@
         "once": true,
         "onceDelay": "7",
         "x": 170,
-        "y": 380,
+        "y": 580,
         "wires": [
             [
                 "14d4dc24.b47e94"
-            ]
-        ]
-    },
-    {
-        "id": "88c01f8f.803a3",
-        "type": "function",
-        "z": "5f562f66.a301e",
-        "name": "Parse MQTT",
-        "func": "return {topic:flow.get('archiverTopic') + msg.topic + '/reading', payload:{\"type\":\"scalar\",\"value\":msg.payload}}",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 850,
-        "y": 360,
-        "wires": [
-            [
-                "dd277d43.3e001"
-            ]
-        ]
-    },
-    {
-        "id": "d50d60eb.b416f",
-        "type": "debug",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "x": 630,
-        "y": 520,
-        "wires": []
-    },
-    {
-        "id": "227bb58f.f9acca",
-        "type": "batch",
-        "z": "5f562f66.a301e",
-        "name": "",
-        "mode": "count",
-        "count": "2",
-        "overlap": 0,
-        "interval": 10,
-        "allowEmptySequence": false,
-        "topics": [],
-        "x": 630,
-        "y": 360,
-        "wires": [
-            [
-                "88c01f8f.803a3"
             ]
         ]
     },
@@ -678,21 +383,154 @@
         "freq": "",
         "out": "out",
         "x": 640,
-        "y": 420,
+        "y": 620,
         "wires": []
     },
     {
-        "id": "914a4cef.a4dc3",
-        "type": "debug",
+        "id": "b3b623c5.9e71e",
+        "type": "mqtt in",
+        "z": "5f562f66.a301e",
+        "name": "Subscribe Settings",
+        "topic": "$(MQTTSUBSCRIBETOPIC)",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "753eaa03.ce2cb4",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "506cdb21.184984"
+            ]
+        ]
+    },
+    {
+        "id": "a75224c4.0e4aa8",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "createSettings",
+        "func": "function getAttrObject(device, propName, attrName)\n{\n    var props = device[propName];\n    var attr = props.find(attr => attr.attr === attrName);\n    return attr;\n}\nfor (var ii = 0; ii < msg.payload.settings.length; ++ii)\n{\n    if (msg.payload.settings[ii].type == 'scalar')\n    {\n        msg.payload.settings[ii].alarm.value = 0;\n        if (!isNaN(msg.payload.settings[ii].value))\n        {\n            if (msg.payload.settings[ii].value < msg.payload.settings[ii].alarm.limits.low)  msg.payload.settings[ii].alarm.value = 1;\n            if (msg.payload.settings[ii].value < msg.payload.settings[ii].alarm.limits.lolo) msg.payload.settings[ii].alarm.value = 3;\n            if (msg.payload.settings[ii].value > msg.payload.settings[ii].alarm.limits.high) msg.payload.settings[ii].alarm.value = 2;\n            if (msg.payload.settings[ii].value > msg.payload.settings[ii].alarm.limits.hihi) msg.payload.settings[ii].alarm.value = 4;\n        }\n    }\n}\n\nflow.set('device', msg.payload);    \n\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1000,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "506cdb21.184984",
+        "type": "json",
         "z": "5f562f66.a301e",
         "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "x": 1060,
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 310,
         "y": 80,
+        "wires": [
+            [
+                "a75224c4.0e4aa8",
+                "e507d5a4.de9ba8"
+            ]
+        ]
+    },
+    {
+        "id": "e507d5a4.de9ba8",
+        "type": "file",
+        "z": "5f562f66.a301e",
+        "name": "Write initSettings.json",
+        "filename": "initSettings.json",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 1020,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "99ed6659.727738",
+        "type": "file in",
+        "z": "5f562f66.a301e",
+        "name": "Read initSettings.json",
+        "filename": "initSettings.json",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 400,
+        "y": 160,
+        "wires": [
+            [
+                "c3b86b01.59d308"
+            ]
+        ]
+    },
+    {
+        "id": "dadbe94c.87edd8",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "initSettings",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 180,
+        "y": 160,
+        "wires": [
+            [
+                "99ed6659.727738"
+            ]
+        ]
+    },
+    {
+        "id": "c3b86b01.59d308",
+        "type": "json",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 570,
+        "y": 160,
+        "wires": [
+            [
+                "a75224c4.0e4aa8"
+            ]
+        ]
+    },
+    {
+        "id": "c41edba7.5b4fb8",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Check alarms",
+        "func": "for (var ii = 0; ii < msg.payload.readings.length; ++ii)\n{\n    if (msg.payload.readings[ii].type == 'scalar')\n    {\n        msg.payload.readings[ii].alarm.value = 0;\n        if (!isNaN(msg.payload.readings[ii].value))\n        {\n            if (msg.payload.readings[ii].value < msg.payload.readings[ii].alarm.limits.low)  msg.payload.readings[ii].alarm.value = 1;\n            if (msg.payload.readings[ii].value < msg.payload.readings[ii].alarm.limits.lolo) msg.payload.readings[ii].alarm.value = 3;\n            if (msg.payload.readings[ii].value > msg.payload.readings[ii].alarm.limits.high) msg.payload.readings[ii].alarm.value = 2;\n            if (msg.payload.readings[ii].value > msg.payload.readings[ii].alarm.limits.hihi) msg.payload.readings[ii].alarm.value = 4;\n        }\n    }\n}\nflow.set('device', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 660,
+        "y": 580,
+        "wires": [
+            [
+                "a59f6c82.3369d"
+            ]
+        ]
+    },
+    {
+        "id": "a59f6c82.3369d",
+        "type": "mqtt out",
+        "z": "5f562f66.a301e",
+        "name": "Publish Readings",
+        "topic": "$(MQTTPUBLISHTOPIC)",
+        "qos": "0",
+        "retain": "false",
+        "broker": "753eaa03.ce2cb4",
+        "x": 850,
+        "y": 580,
         "wires": []
     }
 ]
