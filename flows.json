@@ -334,7 +334,7 @@
         "type": "function",
         "z": "5f562f66.a301e",
         "name": "State Machine",
-        "func": "var relayBounceDelayTimeMilli = 10000;\nfunction getAttrObject(device, propName, attrName)\n{\n    var props = device[propName];\n    var attr = props.find(attr => attr.attr === attrName);\n    return attr;\n}\nfunction checkForRelayBounce(relayOn, now)\n{\n    var relayOnSet = relayOn;\n    if (relayOn != context.get('relayLastState'))\n    {\n        if (relayOn == 0)\n        {\n            context.set('relayLastShutOffTime', now);\n        }\n        else\n        {\n            if ((now - context.get('relayLastShutOffTime')) < relayBounceDelayTimeMilli) relayOnSet = 0;\n        }\n    }\n    context.set('relayLastState', relayOnSet);\n    return relayOnSet;\n}\nvar device = flow.get('device');\nvar temperature = getAttrObject(device, 'readings', 'temperature').value;\nvar targetTemperature = temperature;\nvar dutyFactor = 0.0;\nvar state = context.get('state');\nif (state == undefined) \n{\n    state = 0;\n    context.set('state',state);\n}\nvar deviceState = getAttrObject(device, 'settings', 'state').value;\nif (deviceState != state)\n{\n    state = deviceState;\n    context.set('state',deviceState);\n    context.set('startStateTime', new Date().getTime());\n    context.set('startStateTemperature', temperature);\n    context.set('relayLastShutOffTime', 0);\n}\n\nif (context.get('relayLastShutOffTime') == undefined) context.set('relayLastShutOffTime', 0);\nif (context.get('relayLastState') == undefined) context.set('relayLastState', 0);\nif (context.get('regLEDOn') == undefined) context.set('regLEDOn', false);\n\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nvar now = msg.payload;\nvar rampUptime = getAttrObject(device, 'settings', 'ramp-up-time').value;\nvar rampDowntime = getAttrObject(device, 'settings', 'ramp-down-time').value;\nvar regTemp = getAttrObject(device, 'settings', 'reg-temp').value;\nvar regWindow = getAttrObject(device, 'settings', 'reg-window').value;\n\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampUptime) deltaTime = rampUptime;\n    targetTemperature = (regTemp - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampUptime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0;\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampDowntime) deltaTime = rampDowntime;\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampDowntime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(regTemp * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nvar attrDutyFactor = getAttrObject(device, 'readings', 'duty-factor');\nvar attrRampTemp = getAttrObject(device, 'readings', 'ramp-temp');\nvar attrRelay = getAttrObject(device, 'readings', 'relay');\n\nattrDutyFactor.value = dutyFactor;\nattrRampTemp.value = targetTemperature;\nattrRelay.value = relayOn;\n\nreturn [{topic:'relay',payload:relayOn}, {topic:'device',payload:device}, {topic:'regLED',payload:regLEDOn}];",
+        "func": "var relayBounceDelayTimeMilli = 10000;\nfunction getAttrObject(device, propName, attrName)\n{\n    var props = device[propName];\n    var attr = props.find(attr => attr.attr === attrName);\n    return attr;\n}\nfunction checkForRelayBounce(relayOn, now)\n{\n    var relayOnSet = relayOn;\n    if (relayOn != context.get('relayLastState'))\n    {\n        if (relayOn == 0)\n        {\n            context.set('relayLastShutOffTime', now);\n        }\n        else\n        {\n            if ((now - context.get('relayLastShutOffTime')) < relayBounceDelayTimeMilli) relayOnSet = 0;\n        }\n    }\n    context.set('relayLastState', relayOnSet);\n    return relayOnSet;\n}\nvar device = flow.get('device');\nvar temperature = getAttrObject(device, 'readings', 'temperature').value;\nvar targetTemperature = temperature;\nvar dutyFactor = 0.0;\nvar state = context.get('state');\nif (state == undefined) \n{\n    state = 0;\n    context.set('state',state);\n}\nvar deviceState = getAttrObject(device, 'settings', 'state').value;\nif (deviceState != state)\n{\n    state = deviceState;\n    context.set('state',deviceState);\n    context.set('startStateTime', new Date().getTime());\n    context.set('startStateTemperature', temperature);\n    context.set('relayLastShutOffTime', 0);\n}\n\nif (context.get('relayLastShutOffTime') == undefined) context.set('relayLastShutOffTime', 0);\nif (context.get('relayLastState') == undefined) context.set('relayLastState', 0);\nif (context.get('regLEDOn') == undefined) context.set('regLEDOn', false);\n\nvar relayOn = 0;\nvar regLEDOn = context.get('regLEDOn');\nvar now = msg.payload;\nvar rampUptime = getAttrObject(device, 'settings', 'ramp-up-time').value;\nvar rampDowntime = getAttrObject(device, 'settings', 'ramp-down-time').value;\nvar regTemp = getAttrObject(device, 'settings', 'reg-temp').value;\nvar regWindow = getAttrObject(device, 'settings', 'reg-window').value;\n\nswitch(state) \n{\n  case 0:\n    // off\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n    break;\n  case 1:\n    // ramp up\n    var deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampUptime) deltaTime = rampUptime;\n    targetTemperature = (regTemp - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampUptime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0;\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 2:\n    // ramp down\n    deltaTime = (now - context.get('startStateTime')) / 3600.0 / 1000.0;\n    if (deltaTime > rampDowntime) deltaTime = rampDowntime;\n    targetTemperature = (20.0 - context.get('startStateTemperature')) ;\n    targetTemperature = targetTemperature * deltaTime / rampDowntime;\n    targetTemperature = targetTemperature + context.get('startStateTemperature');\n    targetTemperature = Math.round(targetTemperature * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = !regLEDOn;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 3:\n    // regulate\n    targetTemperature = Math.round(regTemp * 100.0) / 100.0;\n    if (temperature < (targetTemperature - regWindow))\n    {\n        relayOn = 1;\n    }\n    else\n    {\n        relayOn = 0\n    }\n    relayOn = checkForRelayBounce(relayOn, now);\n    regLEDOn = true;\n    context.set('regLEDOn', regLEDOn);\n    break;\n  case 4:\n    // on\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 1;\n    break;\n  default:\n    regLEDOn = false;\n    context.set('regLEDOn', regLEDOn);\n    relayOn = 0;\n}\nvar attrRampTemp = getAttrObject(device, 'readings', 'ramp-temp');\nvar attrRelay = getAttrObject(device, 'readings', 'relay');\n\nattrRampTemp.value = targetTemperature;\nattrRelay.value = relayOn;\n\nvar dutySamples = getAttrObject(device, 'settings', 'duty-factor-samples').value;\nif (dutySamples < 1.0) dutySamples = 1.0;\nvar oldDutyFactor = context.get('dutyFactor');\nif (oldDutyFactor == undefined) oldDutyFactor = 0.0;\ndutyFactor = oldDutyFactor + (100.0 * relayOn - oldDutyFactor) / dutySamples;\ncontext.set('dutyFactor',dutyFactor);\ndutyFactor  = Math.round(dutyFactor * 100.0) / 100.0;\nvar attrDutyFactor = getAttrObject(device, 'readings', 'duty-factor');\nattrDutyFactor.value = dutyFactor;\n\nvar attrLink = getAttrObject(device, 'readings', 'linkQuality');\nvar attrSignal = getAttrObject(device, 'readings', 'signalLevel');\nattrLink.value = flow.get('linkQuality');\nattrSignal.value = flow.get('signalLevel');\n\nreturn [{topic:'relay',payload:relayOn}, {topic:'device',payload:device}, {topic:'regLED',payload:regLEDOn}];",
         "outputs": 3,
         "noerr": 0,
         "x": 420,
@@ -532,5 +532,60 @@
         "x": 850,
         "y": 580,
         "wires": []
+    },
+    {
+        "id": "dc46b311.bc68",
+        "type": "exec",
+        "z": "5f562f66.a301e",
+        "command": "iwconfig",
+        "addpay": false,
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "oldrc": false,
+        "name": "",
+        "x": 320,
+        "y": 280,
+        "wires": [
+            [
+                "a96b59ac.a9b6e8"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "4dde863d.5fcff8",
+        "type": "inject",
+        "z": "5f562f66.a301e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "5",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 160,
+        "y": 280,
+        "wires": [
+            [
+                "dc46b311.bc68"
+            ]
+        ]
+    },
+    {
+        "id": "a96b59ac.a9b6e8",
+        "type": "function",
+        "z": "5f562f66.a301e",
+        "name": "Get Signal Quality",
+        "func": "var info = msg.payload.split('\\n')[6];\nvar linkStartIndex = info.indexOf('Link Quality=');\nvar linkStopIndex = info.indexOf('/70');\nvar linkQuality = Number(info.substring(linkStartIndex + 13, linkStopIndex));\nvar levelStartIndex = info.indexOf('level=') + 6;\nvar levelStopIndex = info.indexOf('dBm') - 1;\nvar signalLevel = Number(info.substring(levelStartIndex, levelStopIndex));\nvar val = {linkQuality : linkQuality, signalLevel: signalLevel};\nflow.set('linkQuality',linkQuality);\nflow.set('signalLevel', signalLevel);\nreturn {topic :'test',payload : val};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 500,
+        "y": 280,
+        "wires": [
+            []
+        ]
     }
 ]
