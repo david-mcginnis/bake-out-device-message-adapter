@@ -360,7 +360,7 @@
         "topic": "clock",
         "payload": "",
         "payloadType": "date",
-        "repeat": "0.5",
+        "repeat": "1",
         "crontab": "",
         "once": true,
         "onceDelay": "7",
