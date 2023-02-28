@@ -21,7 +21,7 @@
   "homepage": "",
   "dependencies": {
     "i2c-bus": "^4.0.9",
-    "node-red": "^0.20.7",
+    "node-red": "^3.0.2",
     "node-red-dashboard": "^2.15.4"
   }
 }
